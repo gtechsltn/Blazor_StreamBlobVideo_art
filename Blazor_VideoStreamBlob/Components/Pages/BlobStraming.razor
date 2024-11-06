@@ -1,0 +1,54 @@
+﻿@page "/blobstreaming"
+ @rendermode InteractiveServer
+
+@inject Blazor_VideoStreamBlob.Infrastructure.BLOBConnect blobConnect
+@inject IConfiguration Configuration
+<h3>BLOB Video Streaming API </h3>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 border-3 border-primary list-group">
+            @foreach (var video in Videos)
+            {
+                <input type="radio" value="@video" name="r" @onclick="@(() => OnVideoSelected(video))" />
+                <label class="form-check-label" for="r">
+                    @video
+                </label>
+                <br />
+            }
+        </div>
+        <div class="col-md-6">
+            @if (!string.IsNullOrEmpty(VideoUrl))
+            {
+                <video width="600" controls autoplay>
+                    <source src="@VideoUrl" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            }
+            else
+            {
+                <p>Loading video...</p>
+            }
+        </div>
+
+    </div>
+</div>
+@code {
+    public List<string> Videos { get; set; } = new List<string>();
+    public string VideoUrl { get; set; } = string.Empty;
+    public string selectedVideo { get; set; } = string.Empty;
+    protected override void OnInitialized()
+    {
+        Videos = blobConnect.ListBlobs();
+    }
+
+    private  void OnVideoSelected(string value)
+    {
+        VideoUrl = "";
+        selectedVideo = value;
+
+
+        VideoUrl = $"/api/getblob/{selectedVideo}?containerName={Configuration.GetSection("AzureStorageSettings:BLOB_CONTAINER_NAME").Value}&blobName={selectedVideo}"; ;
+
+    }
+}

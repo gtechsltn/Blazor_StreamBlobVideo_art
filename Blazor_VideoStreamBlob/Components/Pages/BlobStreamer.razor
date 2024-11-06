@@ -1,0 +1,61 @@
+﻿@page "/blobstreamer"
+@* In Blazor .NET 8, the default hosting model is Static Server-Side Rendering (SSR), which does not support interactive events like @onclick. You need to switch to Interactive Server Rendering. Add the following directive to your component:*@
+ @rendermode InteractiveServer
+
+@inject HttpClient Http
+@inject Blazor_VideoStreamBlob.Infrastructure.BLOBConnect blobConnect
+
+<h3>BLOB Video Streaming using SAS Token</h3>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 border-3 border-primary list-group">
+                @foreach (var video in Videos)
+                {
+                <input type="radio" value="@video" name="r" @onclick="@(() => OnVideoSelected(video))"/>
+                    <label class="form-check-label" for="r">
+                        @video
+                    </label>
+                    <br />
+                }
+        </div>    
+        <div class="col-md-6">
+        @if (!string.IsNullOrEmpty(VideoUrl))
+        {
+            <video width="600" controls autoplay>
+            <source src="@VideoUrl" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        }
+        else
+        {
+            <p>Loading video...</p>
+        }
+        </div>
+         
+    </div>
+</div>
+
+
+@code {
+    public List<string> Videos { get; set; }  = new List<string>();  
+    public string VideoUrl { get; set; } = string.Empty;
+    public string selectedVideo { get; set; } = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        Videos =  blobConnect.ListBlobs();
+    }
+
+
+    private async Task OnVideoSelected(string value)
+    {
+        VideoUrl = "";
+        selectedVideo = value;
+
+        var sasToken = await blobConnect.GetBlobSasToken(selectedVideo);
+
+        VideoUrl = sasToken;
+
+    }
+}
